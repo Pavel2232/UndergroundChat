@@ -2,6 +2,8 @@ import asyncio
 import json
 import logging
 
+import aiofiles
+
 logging.getLogger(__name__)
 logging.basicConfig(level=1
                     )
@@ -22,10 +24,6 @@ async def tcp_echo_client():
     if recived.decode().startswith('\nnull'):
         print('Неизвестный токен. Проверьте его или зарегистрируйте заново.')
 
-    data = await reader.read(1000)
-    if json.loads(data) is None:
-        print('1')
-
     while True:
         user_text = input()
         logging.debug(f'Sender: {user_text}')
@@ -41,5 +39,35 @@ async def tcp_echo_client():
         data = await reader.read(1000)
         logging.debug(f'Received: {data.decode()!r}')
 
+async def registration():
+    reader, writer = await asyncio.open_connection(
+        'minechat.dvmn.org', 5050)
 
-asyncio.run(tcp_echo_client())
+    writer.write('\n'.encode())
+    await writer.drain()
+
+    data = await reader.read(1000)
+    print(f'data: {data.decode()}')
+
+    while True:
+
+        user_text = input()
+        logging.debug(f'Sender: {user_text}')
+
+        writer.write(user_text.encode())
+        writer.write('\n'.encode())
+
+        await writer.drain()
+
+        raw_data_account = await reader.readline()
+
+        account = json.loads(raw_data_account.decode())
+
+        async with aiofiles.open('account.json', mode='a') as f:
+            await f.write(json.dumps(account))
+
+        logging.debug(f'Received: {data.decode()!r}')
+
+
+# asyncio.run(tcp_echo_client())
+asyncio.run(registration())

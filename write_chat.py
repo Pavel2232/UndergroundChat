@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 
 logging.getLogger(__name__)
@@ -14,6 +15,16 @@ async def tcp_echo_client():
 
     writer.write('\n'.encode())
     await writer.drain()
+
+    await reader.read(1000)
+    recived = await reader.read(1000)
+
+    if recived.decode().startswith('\nnull'):
+        print('Неизвестный токен. Проверьте его или зарегистрируйте заново.')
+
+    data = await reader.read(1000)
+    if json.loads(data) is None:
+        print('1')
 
     while True:
         user_text = input()

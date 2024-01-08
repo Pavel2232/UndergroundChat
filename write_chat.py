@@ -11,7 +11,7 @@ logging.basicConfig(level=1
 
 async def submit_message(writer, reader):
     while True:
-        user_text = input()
+        user_text = input().rstrip()
         logging.debug(f'Sender: {user_text}')
         writer.write(user_text.encode())
         await writer.drain()
@@ -23,7 +23,7 @@ async def submit_message(writer, reader):
         await writer.drain()
 
         data = await reader.read(1000)
-        logging.debug(f'Received: {data.decode()!r}')
+        logging.debug(f'Received: {data.decode().rstrip()}')
 
 
 async def authorisation():
@@ -57,7 +57,7 @@ async def registration():
     data = await reader.read(1000)
     print(f'data: {data.decode()}')
 
-    user_text = input()
+    user_text = input().rstrip()
     logging.debug(f'Sender: {user_text}')
 
     writer.write(user_text.encode())

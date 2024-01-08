@@ -1,4 +1,12 @@
 import asyncio
+import datetime
+
+import aiofiles
+
+
+async def write_message_file(message):
+    async with aiofiles.open('chat', mode='a') as f:
+        await f.write(message)
 
 
 async def tcp_client():
@@ -6,8 +14,11 @@ async def tcp_client():
         'minechat.dvmn.org', 5000)
 
     while True:
-        data = await reader.read(1000)
-        print(f'Received: {data.decode()}')
+        data_chanel = await reader.readline()
+        date = f'[{datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")}] '
+        log_message = date + data_chanel.decode()
+        await write_message_file(log_message)
+        print(f'{log_message}')
 
 
 asyncio.run(tcp_client())

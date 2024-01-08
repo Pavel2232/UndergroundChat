@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import json
 import logging
@@ -26,11 +27,11 @@ async def submit_message(writer, reader):
         logging.debug(f'Received: {data.decode().rstrip()}')
 
 
-async def authorisation():
+async def authorisation(token):
     reader, writer = await asyncio.open_connection(
         'minechat.dvmn.org', 5050)
 
-    writer.write('1d1405f0-ae49-11ee-aae7-0242ac110002'.encode())
+    writer.write(f'{token}'.encode())
     await writer.drain()
 
     writer.write('\n'.encode())
@@ -77,5 +78,43 @@ async def registration():
 
     await submit_message(writer, reader)
 
-asyncio.run(authorisation())
-# asyncio.run(registration())
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "-u",
+        "--username",
+        help="Имя пользователя, программа запусит регистрацию",
+    )
+
+    parser.add_argument(
+        "-host",
+        "--host",
+        help="Хост",
+        default='minechat.dvmn.org'
+    )
+
+    parser.add_argument(
+        "-p",
+        "--port",
+        help="Порт",
+        type=int,
+        default=5000
+    )
+
+    parser.add_argument(
+        "-t",
+        "--token",
+        help="Токен пользователя",
+        type=str,
+    )
+    args = parser.parse_args()
+
+    if args.token:
+        asyncio.run(authorisation(args.token))
+
+    if args.username:
+        asyncio.run(registration())
+
+

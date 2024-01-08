@@ -1,5 +1,9 @@
 import asyncio
+import logging
 
+logging.getLogger(__name__)
+logging.basicConfig(level=1
+                    )
 
 async def tcp_echo_client():
     reader, writer = await asyncio.open_connection(
@@ -12,9 +16,9 @@ async def tcp_echo_client():
     await writer.drain()
 
     while True:
-        ok = input()
-
-        writer.write(ok.encode())
+        user_text = input()
+        logging.debug(f'Sender: {user_text}')
+        writer.write(user_text.encode())
         await writer.drain()
 
         writer.write('\n'.encode())
@@ -24,7 +28,7 @@ async def tcp_echo_client():
         await writer.drain()
 
         data = await reader.read(1000)
-        print(f'Received: {data.decode()!r}')
+        logging.debug(f'Received: {data.decode()!r}')
 
 
 asyncio.run(tcp_echo_client())

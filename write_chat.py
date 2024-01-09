@@ -11,72 +11,86 @@ logging.basicConfig(level=1
 
 
 async def submit_message(writer, reader):
-    while True:
-        user_text = input().rstrip()
-        logging.debug(f'Sender: {user_text}')
-        writer.write(user_text.encode())
-        await writer.drain()
+    try:
+        while True:
+            user_text = input().rstrip()
+            logging.debug(f'Sender: {user_text}')
+            writer.write(user_text.encode())
+            await writer.drain()
 
-        writer.write('\n'.encode())
-        await writer.drain()
+            writer.write('\n'.encode())
+            await writer.drain()
 
-        writer.write('\n'.encode())
-        await writer.drain()
+            writer.write('\n'.encode())
+            await writer.drain()
 
-        data = await reader.read(1000)
-        logging.debug(f'Received: {data.decode().rstrip()}')
+            data = await reader.read(1000)
+            logging.debug(f'Received: {data.decode().rstrip()}')
+    finally:
+        writer.close()
+        await writer.wait_closed()
 
 
 async def authorisation(token):
     reader, writer = await asyncio.open_connection(
         'minechat.dvmn.org', 5050)
 
-    writer.write(f'{token}'.encode())
-    await writer.drain()
+    try:
+        writer.write(f'{token}'.encode())
+        await writer.drain()
 
-    writer.write('\n'.encode())
-    await writer.drain()
+        writer.write('\n'.encode())
+        await writer.drain()
 
-    await reader.read(1000)
-    recived = await reader.read(1000)
-    print(recived.decode())
+        await reader.read(1000)
+        recived = await reader.read(1000)
+        print(recived.decode())
 
-    if recived.decode().startswith('\nnull'):
-        print('Неизвестный токен. Проверьте его или зарегистрируйте заново.')
+        if recived.decode().startswith('\nnull'):
+            print(
+                'Неизвестный токен. Проверьте его или зарегистрируйте заново.'
+            )
 
-    else:
-        await submit_message(writer, reader)
+        else:
+            await submit_message(writer, reader)
+    finally:
+        writer.close()
+        await writer.wait_closed()
 
 
-async def registration():
+async def registration(user_name: str):
     reader, writer = await asyncio.open_connection(
         'minechat.dvmn.org', 5050)
+    try:
+        writer.write('\n'.encode())
+        await writer.drain()
 
-    writer.write('\n'.encode())
-    await writer.drain()
+        data = await reader.read(1000)
+        print(f'data: {data.decode()}')
 
-    data = await reader.read(1000)
-    print(f'data: {data.decode()}')
+        user_text = user_name.rstrip()
+        logging.debug(f'Sender: {user_text}')
 
-    user_text = input().rstrip()
-    logging.debug(f'Sender: {user_text}')
+        writer.write(user_text.encode())
+        writer.write('\n'.encode())
 
-    writer.write(user_text.encode())
-    writer.write('\n'.encode())
+        await writer.drain()
 
-    await writer.drain()
+        raw_data_account = await reader.readline()
 
-    raw_data_account = await reader.readline()
+        account = json.loads(raw_data_account.decode())
 
-    account = json.loads(raw_data_account.decode())
+        async with aiofiles.open('account.json', mode='a') as f:
+            await f.write(json.dumps(account))
 
-    async with aiofiles.open('account.json', mode='a') as f:
-        await f.write(json.dumps(account))
-
-    logging.debug(f'Received: {data.decode()!r}')
-    print('Вы успешно зарегистрировались')
+        logging.debug(f'Received: {data.decode()!r}')
+        print('Вы успешно зарегистрировались')
+    finally:
+        writer.close()
+        await writer.wait_closed()
 
     await submit_message(writer, reader)
+
 
 if __name__ == '__main__':
 
@@ -115,6 +129,4 @@ if __name__ == '__main__':
         asyncio.run(authorisation(args.token))
 
     if args.username:
-        asyncio.run(registration())
-
-
+        asyncio.run(registration(args.username))

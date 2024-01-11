@@ -3,6 +3,8 @@ import asyncio
 import datetime
 import aiofiles
 
+from socket_context_manager import Socket
+
 
 async def write_message_file(message, history_file):
     async with aiofiles.open(f'{history_file}', mode='a') as f:
@@ -10,18 +12,15 @@ async def write_message_file(message, history_file):
 
 
 async def tcp_client(host: str, port: int, history_file: str):
-    reader, writer = await asyncio.open_connection(
-        f'{host}', port)
-    try:
-        while True:
-            data_chanel = await reader.readline()
+    socket = Socket(host, port)
+
+    while True:
+        async with socket:
+            data_chanel = await socket.reader.readline()
             date = f'[{datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")}] '
             log_message = date + data_chanel.decode()
             await write_message_file(log_message, history_file=history_file)
             print(f'{log_message}')
-    finally:
-        writer.close()
-        await writer.wait_closed()
 
 
 if __name__ == '__main__':

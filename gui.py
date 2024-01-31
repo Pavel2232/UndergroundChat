@@ -8,6 +8,11 @@ class TkAppClosed(Exception):
     pass
 
 
+class InvalidToken(Exception):
+    def __str__(self):
+        return 'Проверьте токен, Сервер его не узнал.'
+
+
 class ReadConnectionStateChanged(Enum):
     INITIATED = 'устанавливаем соединение'
     ESTABLISHED = 'соединение установлено'
